@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import { TicketItem } from '../types';
 import { TicketPassCard } from './TicketPassCard';
-import { Ticket, QrCode, Filter, Sparkles, RefreshCw } from 'lucide-react';
+import { Ticket, QrCode, Filter, Sparkles, Trash2, Plus } from 'lucide-react';
 
 interface MyTicketsViewProps {
   tickets: TicketItem[];
   onOpenStore: () => void;
   onTestScanTicket: (ticketNumber: string) => void;
-  onResetDemoData: () => void;
+  onOpenPrintModal: (ticket: TicketItem) => void;
+  onClearAllTickets: () => void;
 }
 
 export const MyTicketsView: React.FC<MyTicketsViewProps> = ({
   tickets,
   onOpenStore,
   onTestScanTicket,
-  onResetDemoData
+  onOpenPrintModal,
+  onClearAllTickets
 }) => {
   const [filter, setFilter] = useState<'all' | 'valid' | 'used'>('all');
 
@@ -34,18 +36,18 @@ export const MyTicketsView: React.FC<MyTicketsViewProps> = ({
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">
             <Ticket className="w-3.5 h-3.5" />
-            <span>Carteira Digital de Ingressos</span>
+            <span>Carteira de Ingressos & Impressão</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-            Os Meus Bilhetes do Batismo
+            Ingressos do Batismo dos Caloiros
           </h2>
           <p className="text-slate-400 text-xs sm:text-sm mt-1">
-            Apresenta o QR code diretamente no teu telemóvel na portaria do recinto. A ligação à internet não é obrigatória.
+            Gera e imprime os bilhetes nas dimensões físicas de <strong>50mm de largura × 80mm de altura (5:8)</strong> com validação por QR Code.
           </p>
         </div>
 
-        {/* Filter Segmented Control & Action */}
-        <div className="flex items-center gap-3">
+        {/* Filter Segmented Control & Actions */}
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs">
             <button
               onClick={() => setFilter('all')}
@@ -74,30 +76,47 @@ export const MyTicketsView: React.FC<MyTicketsViewProps> = ({
           </div>
 
           <button
-            onClick={onResetDemoData}
-            title="Repor bilhetes de demonstração"
-            className="p-2 bg-slate-900 border border-slate-800 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-xs transition-colors"
+            onClick={onOpenStore}
+            className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 shadow-sm"
           >
-            <RefreshCw className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
+            <span>Emitir Novo Bilhete</span>
           </button>
+
+          {tickets.length > 0 && (
+            <button
+              onClick={() => {
+                if (confirm('Deseja limpar todos os bilhetes emitidos e deixar o sistema vazio?')) {
+                  onClearAllTickets();
+                }
+              }}
+              title="Limpar todos os bilhetes"
+              className="p-2 bg-slate-900 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-slate-800 rounded-lg text-xs transition-colors flex items-center gap-1"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Limpar Tudo</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Ticket List or Empty State */}
+      {/* Ticket List or Clean Empty State */}
       {filteredTickets.length === 0 ? (
-        <div className="text-center py-16 bg-slate-900/40 rounded-xl border border-slate-800/80 p-8 max-w-md mx-auto">
-          <Ticket className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-white mb-1">
-            Nenhum bilhete encontrado nesta categoria
+        <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800/80 p-8 max-w-lg mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-slate-800/60 border border-slate-700 text-slate-400 flex items-center justify-center mx-auto mb-4">
+            <Ticket className="w-8 h-8" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">
+            Sistema Limpo · Nenhum Bilhete Emitido
           </h3>
-          <p className="text-xs text-slate-400 mb-6">
-            Adquire o teu bilhete oficial para o Batismo dos Caloiros com emissão instantânea de código QR.
+          <p className="text-xs text-slate-400 mb-6 max-w-sm mx-auto leading-relaxed">
+            Todas as informações serão inseridas por si. Clique abaixo para emitir os primeiros bilhetes com pagamento a dinheiro em mão e gerar no tamanho <strong>50mm × 80mm</strong>.
           </p>
           <button
             onClick={onOpenStore}
-            className="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-lg transition-all"
+            className="px-6 py-2.5 bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-950 font-bold text-xs rounded-lg transition-all shadow-md shadow-amber-500/20"
           >
-            Comprar Bilhete Agora
+            Emitir Primeiro Ingresso (Pagar em Mão)
           </button>
         </div>
       ) : (
@@ -107,6 +126,7 @@ export const MyTicketsView: React.FC<MyTicketsViewProps> = ({
               key={t.id}
               ticket={t}
               onTestScan={onTestScanTicket}
+              onOpenPrintModal={onOpenPrintModal}
             />
           ))}
         </div>

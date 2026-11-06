@@ -1,76 +1,31 @@
 import { UserProfile, UserRole } from '../types';
 
-const USERS_STORAGE_KEY = 'proglory_registered_users_v2';
-const SESSION_STORAGE_KEY = 'proglory_active_session_v2';
+const USERS_STORAGE_KEY = 'proglory_registered_users_v4';
+const SESSION_STORAGE_KEY = 'proglory_active_session_v4';
 
 interface StoredUserAccount extends UserProfile {
-  passwordHash: string; // simulated password hash
+  passwordHash: string;
 }
-
-const DEFAULT_USERS: StoredUserAccount[] = [
-  {
-    id: 'user-organizer-1',
-    name: 'Comissão AEP-2 Proglory',
-    email: 'admin@proglory.edu',
-    phone: '923 456 789',
-    studentNumber: 'ORG-AEP2-001',
-    courseOrClass: 'Direção da Associação dos Estudantes',
-    role: 'organizer',
-    createdAt: '2026-11-01',
-    avatarInitials: 'AEP',
-    passwordHash: 'admin123',
-  },
-  {
-    id: 'user-student-1',
-    name: 'Manuel Gonçalves da Costa',
-    email: 'manuel.costa@proglory.edu',
-    phone: '931 889 120',
-    studentNumber: 'CEPP-2026/0491',
-    courseOrClass: '10ª Classe - Ciências Físicas e Biológicas',
-    role: 'student',
-    createdAt: '2026-11-04',
-    avatarInitials: 'MC',
-    passwordHash: 'caloiro123',
-  },
-  {
-    id: 'user-student-2',
-    name: 'Beatriz Teresa dos Santos',
-    email: 'beatriz.santos@proglory.edu',
-    phone: '945 112 334',
-    studentNumber: 'CEPP-2025/1102',
-    courseOrClass: '11ª Classe - Ciências Económicas e Jurídicas',
-    role: 'student',
-    createdAt: '2026-11-03',
-    avatarInitials: 'BS',
-    passwordHash: 'estudante123',
-  }
-];
 
 export function getStoredUsers(): StoredUserAccount[] {
   try {
     const raw = localStorage.getItem(USERS_STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
-      return DEFAULT_USERS;
+      return [];
     }
     return JSON.parse(raw);
   } catch {
-    return DEFAULT_USERS;
+    return [];
   }
 }
 
 export function getCurrentUser(): UserProfile | null {
   try {
     const raw = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (!raw) {
-      // By default, auto-login as demo student or organizer so the user can see profile immediately
-      const defaultUser = DEFAULT_USERS[1];
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(defaultUser));
-      return defaultUser;
-    }
+    if (!raw) return null;
     return JSON.parse(raw);
   } catch {
-    return DEFAULT_USERS[1];
+    return null;
   }
 }
 
@@ -115,11 +70,11 @@ export function registerUser(params: {
     name: params.name.trim(),
     email: emailClean,
     phone: params.phone.trim(),
-    studentNumber: params.studentNumber?.trim() || 'N/A',
-    courseOrClass: params.courseOrClass?.trim() || 'Geral',
-    role: params.role || 'student',
+    studentNumber: params.studentNumber?.trim() || '',
+    courseOrClass: params.courseOrClass?.trim() || '',
+    role: params.role || 'organizer',
     createdAt: new Date().toISOString().slice(0, 10),
-    avatarInitials: initials || 'AL',
+    avatarInitials: initials || 'CP',
     passwordHash: params.password,
   };
 
@@ -142,7 +97,7 @@ export function loginUser(email: string, password: string): { success: boolean; 
 
   const user = users.find((u) => u.email.toLowerCase() === emailClean);
   if (!user) {
-    return { success: false, message: 'Nenhuma conta encontrada com este email.' };
+    return { success: false, message: 'Nenhuma conta encontrada com este email. Pode registar uma nova conta acima.' };
   }
 
   if (user.passwordHash && user.passwordHash !== password) {
@@ -172,4 +127,9 @@ export function updateUserProfile(updates: Partial<UserProfile>): UserProfile | 
 
 export function logoutUser() {
   setCurrentUser(null);
+}
+
+export function clearAllUsers() {
+  localStorage.removeItem(USERS_STORAGE_KEY);
+  localStorage.removeItem(SESSION_STORAGE_KEY);
 }

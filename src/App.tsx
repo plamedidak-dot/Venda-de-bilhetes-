@@ -9,10 +9,11 @@ import { EventInfoSection } from './components/EventInfoSection';
 import { EventsManagerView } from './components/EventsManagerView';
 import { AuthModal } from './components/AuthModal';
 import { UserProfileModal } from './components/UserProfileModal';
+import { PrintableTicketModal } from './components/PrintableTicketModal';
 import { TicketPassCard } from './components/TicketPassCard';
 import { Footer } from './components/Footer';
 import { TicketItem, TicketTierId, UserProfile, CaloiroEvent } from './types';
-import { getStoredTickets, addTickets, resetDemoDataToInitial } from './utils/storage';
+import { getStoredTickets, addTickets, clearAllSystemData } from './utils/storage';
 import { getCurrentUser, logoutUser } from './utils/auth';
 import { getStoredEvents, getActiveEvent, setActiveEventId } from './utils/events';
 import { X } from 'lucide-react';
@@ -41,6 +42,7 @@ export default function App() {
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [testScanCode, setTestScanCode] = useState<string | undefined>(undefined);
   const [selectedTicketForModal, setSelectedTicketForModal] = useState<TicketItem | null>(null);
+  const [printableTicket, setPrintableTicket] = useState<TicketItem | null>(null);
 
   // Initialize data on mount
   useEffect(() => {
@@ -78,17 +80,22 @@ export default function App() {
       geral: 0,
       vip: 0,
     });
+    // Automatically open the printable 5:8 modal for the freshly issued ticket!
+    if (newTickets.length > 0) {
+      setPrintableTicket(newTickets[0]);
+    }
   };
 
   const handleTestScanTicket = (ticketNumber: string) => {
     setTestScanCode(ticketNumber);
     setActiveTab('scanner');
     setSelectedTicketForModal(null);
+    setPrintableTicket(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleResetDemo = () => {
-    resetDemoDataToInitial();
+  const handleClearAllTickets = () => {
+    clearAllSystemData();
     refreshAllData();
   };
 
@@ -97,7 +104,6 @@ export default function App() {
     const act = getActiveEvent();
     setActiveEvent(act);
     setEvents(getStoredEvents());
-    // Reset selection for new event
     setQuantities({
       caloiro: 0,
       veterano: 0,
@@ -108,7 +114,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // User tickets filter: tickets that belong to the current user
+  // User tickets filter
   const userTickets = currentUser
     ? tickets.filter(
         (t) =>
@@ -181,7 +187,8 @@ export default function App() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onTestScanTicket={handleTestScanTicket}
-            onResetDemoData={handleResetDemo}
+            onOpenPrintModal={(ticket) => setPrintableTicket(ticket)}
+            onClearAllTickets={handleClearAllTickets}
           />
         )}
 
@@ -200,7 +207,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Checkout Modal */}
+      {/* Checkout Modal (Cash in Hand in Kwanza) */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => {
@@ -235,27 +242,19 @@ export default function App() {
             logoutUser();
             setCurrentUser(null);
           }}
-          onSelectTicketPass={(t) => setSelectedTicketForModal(t)}
+          onSelectTicketPass={(t) => setPrintableTicket(t)}
           onProfileUpdated={(updated) => setCurrentUser(updated)}
         />
       )}
 
-      {/* Dedicated Ticket Pass Popup if opened from profile */}
-      {selectedTicketForModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-sm my-8">
-            <button
-              onClick={() => setSelectedTicketForModal(null)}
-              className="absolute -top-3 -right-3 z-20 w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 shadow-lg border border-slate-700"
-            >
-              <X className="w-4 h-4" />
-            </button>
-            <TicketPassCard
-              ticket={selectedTicketForModal}
-              onTestScan={handleTestScanTicket}
-            />
-          </div>
-        </div>
+      {/* Dedicated Printable Ticket Modal (5mm / 50mm x 8mm / 80mm Scale) */}
+      {printableTicket && (
+        <PrintableTicketModal
+          isOpen={!!printableTicket}
+          onClose={() => setPrintableTicket(null)}
+          ticket={printableTicket}
+          onTestScan={handleTestScanTicket}
+        />
       )}
 
       {/* Institutional Footer */}

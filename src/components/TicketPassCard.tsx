@@ -1,20 +1,24 @@
 import React, { useEffect, useState, useRef } from 'react';
 import QRCode from 'qrcode';
 import { TicketItem, formatKwanza } from '../types';
-import { Download, Printer, CheckCircle2, AlertOctagon, Sparkles, Copy, Check, Banknote } from 'lucide-react';
+import { Download, Printer, CheckCircle2, AlertOctagon, Sparkles, Copy, Check, Banknote, Maximize2 } from 'lucide-react';
 
 interface TicketPassCardProps {
   ticket: TicketItem;
   onTestScan?: (ticketNumber: string) => void;
+  onOpenPrintModal?: (ticket: TicketItem) => void;
 }
 
-export const TicketPassCard: React.FC<TicketPassCardProps> = ({ ticket, onTestScan }) => {
+export const TicketPassCard: React.FC<TicketPassCardProps> = ({
+  ticket,
+  onTestScan,
+  onOpenPrintModal
+}) => {
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Generate high resolution QR code data URL
     QRCode.toDataURL(ticket.ticketNumber, {
       width: 280,
       margin: 1.5,
@@ -40,10 +44,6 @@ export const TicketPassCard: React.FC<TicketPassCardProps> = ({ ticket, onTestSc
     link.download = `Bilhete-Proglory-${ticket.ticketNumber}.png`;
     link.href = qrDataUrl;
     link.click();
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const isUsed = ticket.status === 'used';
@@ -190,37 +190,40 @@ export const TicketPassCard: React.FC<TicketPassCardProps> = ({ ticket, onTestSc
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <button
-            type="button"
-            onClick={handleDownloadImage}
-            className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded flex items-center justify-center gap-1 transition-colors"
-          >
-            <Download className="w-3.5 h-3.5 text-amber-400" />
-            <span>Guardar QR</span>
-          </button>
-
-          {onTestScan && !isUsed && (
+        {/* 50x80mm Format Notice & Action */}
+        <div className="pt-1 flex flex-col gap-2">
+          {onOpenPrintModal && (
             <button
               type="button"
-              onClick={() => onTestScan(ticket.ticketNumber)}
-              className="py-1.5 px-2 bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 text-xs font-semibold rounded flex items-center justify-center gap-1 transition-colors"
+              onClick={() => onOpenPrintModal(ticket)}
+              className="w-full py-2 px-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-sm"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Validar na Portaria</span>
+              <Printer className="w-3.5 h-3.5" />
+              <span>Imprimir / Gerar em 50mm × 80mm (Proporção 5:8)</span>
             </button>
           )}
 
-          {isUsed && (
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={handlePrint}
+              onClick={handleDownloadImage}
               className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded flex items-center justify-center gap-1 transition-colors"
             >
-              <Printer className="w-3.5 h-3.5 text-slate-400" />
-              <span>Imprimir</span>
+              <Download className="w-3.5 h-3.5 text-amber-400" />
+              <span>Guardar QR</span>
             </button>
-          )}
+
+            {onTestScan && !isUsed && (
+              <button
+                type="button"
+                onClick={() => onTestScan(ticket.ticketNumber)}
+                className="py-1.5 px-2 bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 text-xs font-semibold rounded flex items-center justify-center gap-1 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Validar Portaria</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

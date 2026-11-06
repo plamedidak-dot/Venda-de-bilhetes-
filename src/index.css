@@ -15,7 +15,7 @@
   }
 }
 
-/* Custom scrollbars for slick dark festival feel */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -32,4 +32,28 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
+}
+
+/* Print Styles for exact ticket printing */
+@media print {
+  @page {
+    size: auto;
+    margin: 3mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Hide everything except the printable ticket container */
+  header, nav, footer, button, .no-print {
+    display: none !important;
+  }
+
+  .printable-ticket-area {
+    visibility: visible !important;
+    margin: 0 auto !important;
+    page-break-inside: avoid;
+  }
 }

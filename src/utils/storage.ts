@@ -1,19 +1,19 @@
-import { INITIAL_SEEDED_TICKETS } from '../data/initialData';
 import { GateLogEntry, GateValidationResult, TicketItem } from '../types';
 
-const TICKETS_KEY = 'batismo_academic_tickets_v1';
-const GATE_LOGS_KEY = 'batismo_gate_logs_v1';
+const TICKETS_KEY = 'proglory_tickets_v4';
+const GATE_LOGS_KEY = 'proglory_gate_logs_v4';
 
 export function getStoredTickets(): TicketItem[] {
   try {
     const raw = localStorage.getItem(TICKETS_KEY);
     if (!raw) {
-      localStorage.setItem(TICKETS_KEY, JSON.stringify(INITIAL_SEEDED_TICKETS));
-      return INITIAL_SEEDED_TICKETS;
+      // Clean slate - starts completely empty as requested by user!
+      localStorage.setItem(TICKETS_KEY, JSON.stringify([]));
+      return [];
     }
     return JSON.parse(raw);
   } catch {
-    return INITIAL_SEEDED_TICKETS;
+    return [];
   }
 }
 
@@ -32,6 +32,13 @@ export function addTickets(newTickets: TicketItem[]) {
   return updated;
 }
 
+export function deleteStoredTicket(id: string) {
+  const current = getStoredTickets();
+  const updated = current.filter((t) => t.id !== id);
+  saveStoredTickets(updated);
+  return updated;
+}
+
 export function getStoredGateLogs(): GateLogEntry[] {
   try {
     const raw = localStorage.getItem(GATE_LOGS_KEY);
@@ -45,7 +52,7 @@ export function getStoredGateLogs(): GateLogEntry[] {
 export function addGateLog(entry: GateLogEntry) {
   try {
     const current = getStoredGateLogs();
-    const updated = [entry, ...current].slice(0, 50); // Keep last 50
+    const updated = [entry, ...current].slice(0, 50);
     localStorage.setItem(GATE_LOGS_KEY, JSON.stringify(updated));
     return updated;
   } catch {
@@ -53,13 +60,13 @@ export function addGateLog(entry: GateLogEntry) {
   }
 }
 
-export function validateTicketCode(codeOrPayload: string, gateName: string = 'Porta 1 - Principal'): GateValidationResult {
+export function validateTicketCode(codeOrPayload: string, gateName: string = 'Portaria Polo II - Principal'): GateValidationResult {
   const cleanInput = codeOrPayload.trim();
   const tickets = getStoredTickets();
   const now = new Date();
   const timestampStr = now.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  // Match either ticketNumber (e.g. BAT-26-CAL-10492) or qrPayload
+  // Match either ticketNumber or qrPayload or contains code
   const ticketIndex = tickets.findIndex(
     (t) =>
       t.ticketNumber.toLowerCase() === cleanInput.toLowerCase() ||
@@ -71,11 +78,11 @@ export function validateTicketCode(codeOrPayload: string, gateName: string = 'Po
     const log: GateLogEntry = {
       id: 'log-' + Date.now(),
       timestamp: timestampStr,
-      ticketNumber: cleanInput.slice(0, 18) || 'CÓDIGO DESCONHECIDO',
+      ticketNumber: cleanInput.slice(0, 22) || 'CÓDIGO NÃO REGISTADO',
       attendeeName: 'Desconhecido',
       tierName: 'Não Identificado',
       status: 'invalid',
-      message: 'Bilhete não registado na base de dados do evento.',
+      message: 'Bilhete não registado no sistema.',
       gate: gateName
     };
     addGateLog(log);
@@ -99,7 +106,7 @@ export function validateTicketCode(codeOrPayload: string, gateName: string = 'Po
       attendeeName: ticket.attendeeName,
       tierName: ticket.tierName,
       status: 'already_used',
-      message: `Bilhete já validado anteriormente às ${ticket.usedAt || 'hora prévia'} (${ticket.validatedByGate || 'Portaria'}).`,
+      message: `Bilhete já validado às ${ticket.usedAt || 'hora prévia'} (${ticket.validatedByGate || 'Portaria'}).`,
       gate: gateName
     };
     addGateLog(log);
@@ -145,8 +152,10 @@ export function validateTicketCode(codeOrPayload: string, gateName: string = 'Po
   };
 }
 
-export function resetDemoDataToInitial() {
-  localStorage.setItem(TICKETS_KEY, JSON.stringify(INITIAL_SEEDED_TICKETS));
+export function clearAllSystemData() {
+  localStorage.removeItem(TICKETS_KEY);
   localStorage.removeItem(GATE_LOGS_KEY);
-  return INITIAL_SEEDED_TICKETS;
+  return [];
 }
+
+export const resetDemoDataToInitial = clearAllSystemData;
