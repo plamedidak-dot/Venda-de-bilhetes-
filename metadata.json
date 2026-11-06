@@ -1,0 +1,10 @@
+{
+  "name": "Batismo dos Caloiros - Complexo Escolar Privado Proglory",
+  "description": "Sistema de bilhética e validação QR da Associação dos Estudantes do Complexo Escolar Privado Proglory (AEP-2 Da Graça - Polo II) com gestão de eventos e perfis de utilizador.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
